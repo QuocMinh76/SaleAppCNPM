@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Trang chủ</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <h1>HELLO WORLD</h1>
+
+    {% for i in range(10) %}
+        <li>{{ i }} * 2 = {{ 2 * i }}</li>
+    {% endfor %}
+</body>
+</html>
