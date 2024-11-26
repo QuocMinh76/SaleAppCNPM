@@ -2,8 +2,8 @@ import math
 
 from flask import render_template, request, redirect
 import dao
-from app import app
-
+from app import app, login
+from flask_login import login_user, logout_user
 
 @app.route("/")
 def index():
@@ -33,14 +33,32 @@ def register_view():
             data = request.form.copy()
 
             del data['confirm']
-            dao.add_user(**data)
+            avatar = request.files.get('avatar')
+            dao.add_user(avatar=avatar, **data)
             return redirect('/login')
 
     return render_template('register.html', err_msg=err_msg)
 
-@app.route("/login")
+@app.route("/login", methods=['get', 'post'])
 def login_view():
+    if request.method.__eq__('POST'):
+        username = request.form.get('username')
+        password = request.form.get('password')
+        user = dao.auth_user(username=username, password=password)
+        if user:
+            login_user(user=user)
+            return redirect('/')
+
     return render_template('login.html')
+
+@app.route('/logout')
+def logout_process():
+    logout_user()
+    return redirect('/login')
+
+@login.user_loader
+def load_user(user_id):
+    return dao.get_user_by_id(user_id)
 
 if __name__ == '__main__':
     with app.app_context():

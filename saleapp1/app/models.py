@@ -3,12 +3,13 @@ from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, Enum
 from app import db, app
 import hashlib
 from enum import Enum as RoleEnum
+from flask_login import UserMixin
 
 class UserRole(RoleEnum):
     ADMIN = 1
     USER = 2
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(100), nullable=False)
     username = Column(String(100), nullable=False, unique=True)
@@ -31,10 +32,9 @@ class Product(db.Model):
     image = Column(String(100), nullable=True)
     category_id = Column(Integer, ForeignKey(Category.id), nullable=False)
 
-
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all()
+        # db.create_all()
 
         # add user
         u = User(name="admin", username="admin", password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
@@ -47,7 +47,7 @@ if __name__ == '__main__':
         # c1 = Category(name="Mobile")
         # c2 = Category(name="Tablet")
         # c3 = Category(name="Desktop")
-        #
+
         # db.session.add_all([c1, c2, c3])
         # db.session.commit()
 
