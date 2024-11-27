@@ -23,6 +23,9 @@ class Category(db.Model):
     name = Column(String(50), nullable=False, unique=True)
     products = relationship('Product', backref='category', lazy=True)
 
+    def __str__(self):
+        return self.name
+
 
 class Product(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -32,12 +35,16 @@ class Product(db.Model):
     image = Column(String(100), nullable=True)
     category_id = Column(Integer, ForeignKey(Category.id), nullable=False)
 
+    def __str__(self):
+        return self.name
+
+
 if __name__ == '__main__':
     with app.app_context():
         # db.create_all()
 
         # add user
-        u = User(name="admin", username="admin", password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
+        u = User(name="admin", username="admin", password=str(hashlib.md5("123456".strip().encode('utf-8')).hexdigest()),
                  avatar="https://res.cloudinary.com/dxxwcby8l/image/upload/v1647056401/ipmsmnxjydrhpo21xrd8.jpg",
                  user_role=UserRole.ADMIN)
         db.session.add(u)
@@ -47,7 +54,7 @@ if __name__ == '__main__':
         # c1 = Category(name="Mobile")
         # c2 = Category(name="Tablet")
         # c3 = Category(name="Desktop")
-
+        #
         # db.session.add_all([c1, c2, c3])
         # db.session.commit()
 

@@ -1,9 +1,11 @@
 import math
 
-from flask import render_template, request, redirect
-import dao
+from flask import render_template, request, redirect, session, jsonify
+import dao, utils
 from app import app, login
 from flask_login import login_user, logout_user
+from app.models import UserRole
+
 
 @app.route("/")
 def index():
@@ -12,12 +14,13 @@ def index():
     page = request.args.get('page', 1)
     cate_id = request.args.get('category_id')
     kw = request.args.get('kw')
-    prods = dao.load_products(cate_id= cate_id, kw=kw, page=int(page))
+    prods = dao.load_products(cate_id=cate_id, kw=kw, page=int(page))
 
     page_size = app.config["PAGE_SIZE"]
     total = dao.count_products()
 
-    return render_template('index.html', categories=cates, products=prods, pages=math.ceil(total/page_size))
+    return render_template('index.html', categories=cates, products=prods, pages=math.ceil(total / page_size))
+
 
 @app.route("/register", methods=['get', 'post'])
 def register_view():
@@ -39,8 +42,9 @@ def register_view():
 
     return render_template('register.html', err_msg=err_msg)
 
+
 @app.route("/login", methods=['get', 'post'])
-def login_view():
+def login_process():
     if request.method.__eq__('POST'):
         username = request.form.get('username')
         password = request.form.get('password')
@@ -51,15 +55,72 @@ def login_view():
 
     return render_template('login.html')
 
+
+@app.route("/login-admin", methods=['post'])
+def login_admin_process():
+    username = request.form.get('username')
+    password = request.form.get('password')
+    user = dao.auth_user(username=username, password=password, role=UserRole.ADMIN)
+    if user:
+        login_user(user=user)
+
+    return redirect('/admin')
+
+
 @app.route('/logout')
 def logout_process():
     logout_user()
     return redirect('/login')
 
+
+@app.route('/api/carts', methods=['post'])
+def add_to_cart():
+    # {
+    #     "1": {
+    #         "id": 1,
+    #         "name": 'iphone',
+    #         "price": 123,
+    #         "quantity": 2
+    #     }, "2": {
+    #         "id": 2,
+    #         "name": 'iphone',
+    #         "price": 123,
+    #         "quantity": 1
+    #     }
+    #
+    # }
+    cart = session.get('cart')
+    if not cart:
+        cart = {}
+
+    print(request.json)
+    id = str(request.json.get('id'))
+    name = request.json.get('name')
+    price = request.json.get('price')
+
+    if id in cart:
+        cart[id]['quantity'] = cart[id]['quantity'] + 1
+    else:
+        cart[id] = {
+            "id": id,
+            "name": name,
+            "price": price,
+            "quantity": 1
+        }
+
+    session['cart'] = cart
+
+    print(cart)
+
+    return jsonify(utils.cart_stats(cart))
+
 @login.user_loader
 def load_user(user_id):
     return dao.get_user_by_id(user_id)
 
+
 if __name__ == '__main__':
     with app.app_context():
+        from app import admin
+
         app.run(debug=True)
