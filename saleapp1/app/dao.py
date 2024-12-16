@@ -1,7 +1,9 @@
-from app.models import Category, Product, User
+from app.models import Category, Product, User, Receipt, ReceiptDetails
 from app import app, db
 import hashlib
 import cloudinary.uploader
+from flask_login import current_user
+from sqlalchemy import func
 
 
 def load_categories():
@@ -42,6 +44,20 @@ def add_user(name, username, password, avatar):
     db.session.commit()
 
 
+def add_receipt(cart):
+    if cart:
+        receipt = Receipt(user=current_user)
+
+        db.session.add(receipt)
+
+        for c in cart.values():
+            detail = ReceiptDetails(quantity=c['quantity'], unit_price=c['price'],
+                                    product_id=c['id'], receipt=receipt)
+            db.session.add(detail)
+
+        db.session.commit()
+
+
 def auth_user(username, password, role=None):
     password = str(hashlib.md5(password.strip().encode('utf-8')).hexdigest())
 
@@ -56,3 +72,19 @@ def auth_user(username, password, role=None):
 
 def get_user_by_id(id):
     return User.query.get(id)
+
+
+def revenue_stats(kw=None):
+    query = db.session.query(Product.id, Product.name, func.sum(ReceiptDetails.quantity * ReceiptDetails.unit_price))\
+        .join(ReceiptDetails, ReceiptDetails.product_id.__eq__(Product.id)).group_by(Product.id)
+
+    if kw:
+        query = query.filter(Product.name.contains(kw))
+
+    return query.all()
+
+
+# Chạy thử in kết quả hàm thống kê
+if __name__ == '__main__':
+    with app.app_context():
+        print(revenue_stats())

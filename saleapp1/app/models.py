@@ -1,13 +1,16 @@
 from sqlalchemy.orm import relationship
-from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, Enum, DateTime
 from app import db, app
 import hashlib
 from enum import Enum as RoleEnum
 from flask_login import UserMixin
+from datetime import datetime
+
 
 class UserRole(RoleEnum):
     ADMIN = 1
     USER = 2
+
 
 class User(db.Model, UserMixin):
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -17,6 +20,8 @@ class User(db.Model, UserMixin):
     avatar = Column(String(100), nullable=True)
     active = Column(Boolean, default=True)
     user_role = Column(Enum(UserRole), default=UserRole.USER)
+    receipts = relationship('Receipt', backref='user', lazy=True)
+
 
 class Category(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -34,17 +39,34 @@ class Product(db.Model):
     price = Column(Float, default=0)
     image = Column(String(100), nullable=True)
     category_id = Column(Integer, ForeignKey(Category.id), nullable=False)
+    details = relationship('ReceiptDetails', backref='product', lazy=True)
 
     def __str__(self):
         return self.name
 
 
+class Receipt(db.Model):
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey(User.id), nullable=False)
+    created_date = Column(DateTime, default=datetime.now())
+    details = relationship('ReceiptDetails', backref='receipt', lazy=True)
+
+
+class ReceiptDetails(db.Model):
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    product_id = Column(Integer, ForeignKey(Product.id), nullable=False)
+    receipt_id = Column(Integer, ForeignKey(Receipt.id), nullable=False)
+    quantity = Column(Integer, default=0)
+    unit_price = Column(Float, default=0)
+
+
 if __name__ == '__main__':
     with app.app_context():
-        # db.create_all()
+        db.create_all()
 
         # add user
-        u = User(name="admin", username="admin", password=str(hashlib.md5("123456".strip().encode('utf-8')).hexdigest()),
+        u = User(name="admin", username="admin",
+                 password=str(hashlib.md5("123456".strip().encode('utf-8')).hexdigest()),
                  avatar="https://res.cloudinary.com/dxxwcby8l/image/upload/v1647056401/ipmsmnxjydrhpo21xrd8.jpg",
                  user_role=UserRole.ADMIN)
         db.session.add(u)
@@ -54,7 +76,7 @@ if __name__ == '__main__':
         # c1 = Category(name="Mobile")
         # c2 = Category(name="Tablet")
         # c3 = Category(name="Desktop")
-
+        #
         # db.session.add_all([c1, c2, c3])
         # db.session.commit()
 

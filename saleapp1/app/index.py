@@ -9,7 +9,6 @@ from app.models import UserRole
 
 @app.route("/")
 def index():
-
     page = request.args.get('page', 1)
     cate_id = request.args.get('category_id')
     kw = request.args.get('kw')
@@ -50,7 +49,9 @@ def login_process():
         user = dao.auth_user(username=username, password=password)
         if user:
             login_user(user=user)
-            return redirect('/')
+
+            next = request.args.get('next')
+            return redirect('/' if next is None else next)
 
     return render_template('login.html')
 
@@ -92,7 +93,6 @@ def add_to_cart():
     if not cart:
         cart = {}
 
-    print(request.json)
     id = str(request.json.get('id'))
     name = request.json.get('name')
     price = request.json.get('price')
@@ -109,9 +109,43 @@ def add_to_cart():
 
     session['cart'] = cart
 
-    print(cart)
+    return jsonify(utils.cart_stats(cart))
+
+
+@app.route("/api/carts/<product_id>", methods=['put'])
+def update_cart(product_id):
+    quantity = request.json.get('quantity', 0)
+
+    cart = session.get('cart')
+    if cart and product_id in cart:
+        cart[product_id]["quantity"] = int(quantity)
+
+    session['cart'] = cart
 
     return jsonify(utils.cart_stats(cart))
+
+
+@app.route("/api/carts/<product_id>", methods=['delete'])
+def delete_cart(product_id):
+    cart = session.get('cart')
+    if cart and product_id in cart:
+        del cart[product_id]
+
+    session['cart'] = cart
+
+    return jsonify(utils.cart_stats(cart))
+
+
+@app.route("/api/pay", methods=['post'])
+def pay():
+    cart = session.get('cart')
+    try:
+        dao.add_receipt(cart)
+    except Exception as ex:
+        return jsonify({'status': 500, 'msg': str(ex)})
+    else:
+        del session['cart']
+        return jsonify({'status': 200, 'msg': 'successful'})
 
 
 @app.route('/cart')

@@ -1,4 +1,4 @@
-from app import db, app
+from app import db, app, dao
 from flask_admin import Admin, BaseView, expose
 from flask_admin.contrib.sqla import ModelView
 from app.models import Category, Product, User, UserRole
@@ -40,7 +40,8 @@ class LogoutView(AuthenticatedBaseView):
 class StatsView(AuthenticatedBaseView):
     @expose("/")
     def index(self):
-        return self.render('admin/stats.html')
+        stats = dao.revenue_stats()
+        return self.render('admin/stats.html', stats=stats)
 
 
 admin.add_view(CategoryView(Category, db.session))
