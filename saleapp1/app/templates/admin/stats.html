@@ -4,41 +4,67 @@
 <h1 class="text-danger text-center mt-1">THỐNG KÊ BÁO CÁO</h1>
 
 <div class="row">
-    <div class="col-md-7 col-12">
+    <div class="col-md-6 col-12">
         <table class="table">
             <tr>
                 <th>Id</th>
                 <th>Tên sản phẩm</th>
                 <th>Tổng doanh thu</th>
             </tr>
-            {% for s in stats %}
+            {% for s in revenue_stats %}
             <tr>
                 <td>{{ s[0] }}</td>
                 <td>{{ s[1] }}</td>
-                <td>{{ s[2] }}</td>
+                <td>{{ "{:,.0f}".format(s[2]) }} VNĐ</td>
             </tr>
             {% endfor %}
         </table>
     </div>
-    <div class="col-md-5 col-12">
-        <canvas id="myChart"></canvas>
+    <div class="col-md-6 col-12">
+        <canvas id="myRevenueChart"></canvas>
+    </div>
+</div>
+
+<div class="row mt-2">
+    <div class="col-md-6 col-12">
+        <table class="table">
+            <tr>
+                <th>Thời gian</th>
+                <th>Tổng doanh thu</th>
+            </tr>
+            {% for s in period_stats %}
+            <tr>
+                <td>{{ s[0] }}</td>
+                <td>{{ "{:,.0f}".format(s[1]) }} VNĐ</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    <div class="col-md-6 col-12">
+        <canvas id="myPeriodChart"></canvas>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-        let data = [];
-        let labels = [];
+        let revenue_data = [];
+        let revenue_labels = [];
 
-        {% for s in stats %}
-            labels.push('{{ s[1] }}');
-            data.push({{ s[2] }});
+        {% for s in revenue_stats %}
+            revenue_labels.push('{{ s[1] }}');
+            revenue_data.push({{ s[2] }});
         {% endfor %}
 
-        window.onload = function() {
-          const ctx = document.getElementById('myChart');
+        let period_data = [];
+        let period_labels = [];
 
-           new Chart(ctx, {
+        {% for s in period_stats %}
+            period_labels.push({{ s[0] }});
+            period_data.push({{ s[1] }});
+        {% endfor %}
+
+        function draw(ctx, data, labels) {
+            new Chart(ctx, {
              type: 'bar',
              data: {
                labels: labels,
@@ -57,6 +83,14 @@
                }
              }
            });
+        }
+
+        window.onload = function() {
+          const revenue_ctx = document.getElementById('myRevenueChart');
+          const period_ctx = document.getElementById('myPeriodChart');
+
+          draw(revenue_ctx, revenue_data, revenue_labels);
+          draw(period_ctx, period_data, period_labels);
         }
 </script>
 {% endblock %}

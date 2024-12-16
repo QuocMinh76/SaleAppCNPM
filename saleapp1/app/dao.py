@@ -4,6 +4,7 @@ import hashlib
 import cloudinary.uploader
 from flask_login import current_user
 from sqlalchemy import func
+from datetime import datetime
 
 
 def load_categories():
@@ -84,7 +85,24 @@ def revenue_stats(kw=None):
     return query.all()
 
 
+def period_stats(p='month', year=datetime.now().year):
+    return db.session.query(func.extract(p, Receipt.created_date),
+                            func.sum(ReceiptDetails.quantity * ReceiptDetails.unit_price))\
+                        .join(ReceiptDetails, ReceiptDetails.receipt_id.__eq__(Receipt.id))\
+                        .group_by(func.extract(p, Receipt.created_date), func.extract('year', Receipt.created_date))\
+                        .filter(func.extract('year', Receipt.created_date).__eq__(year)).all()
+
+
+def stats_products():
+    return db.session.query(Category.id, Category.name, func.count(Product.id))\
+        .join(Product, Product.category_id.__eq__(Category.id), isouter=True).group_by(Category.id).all()
+
+
+def get_prod_by_id(id):
+    return Product.query.get(id)
+
+
 # Chạy thử in kết quả hàm thống kê
 if __name__ == '__main__':
     with app.app_context():
-        print(revenue_stats())
+        print(stats_products())

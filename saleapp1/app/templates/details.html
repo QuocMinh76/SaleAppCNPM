@@ -1,0 +1,14 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-5 col-6">
+        <img src="{{ product.image }}" class="rounded img-fluid" />
+    </div>
+    <div class="col-md-7 col-6">
+        <h1>{{ product.name }}</h1>
+        <h3 class="text-danger">{{ product.price }} VNĐ</h3>
+        <button class="btn btn-danger" onclick="addToCart({{ product.id }}, '{{ product.name }}', {{ product.price }})">Đặt hàng</button>
+    </div>
+</div>
+{% endblock %}

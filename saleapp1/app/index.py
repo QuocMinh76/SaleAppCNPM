@@ -20,6 +20,11 @@ def index():
     return render_template('index.html', products=prods, pages=math.ceil(total / page_size))
 
 
+@app.route("/products/<product_id>")
+def product_details(product_id):
+    return render_template('details.html', product=dao.get_prod_by_id(product_id))
+
+
 @app.route("/register", methods=['get', 'post'])
 def register_view():
     err_msg = ''

@@ -4,6 +4,68 @@
 {% if current_user.is_authenticated %}
 <h1 class="text-info mt-1">CHÀO MỪNG ĐẾN VỚI TRANG QUẢN TRỊ!</h1>
 <h2 class="text-danger">Chào {{ current_user.username }}.</h2>
+
+<div class="row mt-4">
+    <div class="col-md-6 col-12">
+        <table class="table">
+            <tr>
+                <th>Id</th>
+                <th>Tên danh mục</th>
+                <th>Số lượng sản phẩm</th>
+            </tr>
+            {% for s in cates_stats %}
+            <tr>
+                <td>{{ s[0] }}</td>
+                <td>{{ s[1] }}</td>
+                <td>{{ s[2] }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    <div class="col-md-6 col-12">
+        <canvas id="myChart"></canvas>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let cates_data = []
+    let cates_labels = []
+
+    {% for s in cates_stats %}
+        cates_labels.push('{{ s[1] }}')
+        cates_data.push({{ s[2] }})
+    {% endfor %}
+
+    function draw(ctx, data, labels) {
+            new Chart(ctx, {
+             type: 'pie',
+             data: {
+               labels: labels,
+               datasets: [{
+                 label: 'Doanh thu',
+                 data: data,
+                 borderWidth: 1,
+                 backgroundColor: ['red', 'blue', 'green', 'yellow', 'pink', 'gold', 'purple']
+               }]
+             },
+             options: {
+               scales: {
+                 y: {
+                   beginAtZero: true
+                 }
+               }
+             }
+           });
+        }
+
+    window.onload = function() {
+        const cates_ctx = document.getElementById('myChart');
+
+        draw(cates_ctx, cates_data, cates_labels);
+    }
+</script>
+
 {% else %}
 <h1 class="text-center text-danger">ĐĂNG NHẬP QUẢN TRỊ</h1>
 <form method="post" action="/login-admin">
