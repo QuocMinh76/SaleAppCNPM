@@ -3,8 +3,9 @@ import math
 from flask import render_template, request, redirect, session, jsonify
 import dao, utils
 from app import app, login
-from flask_login import login_user, logout_user
+from flask_login import login_user, logout_user, login_required
 from app.models import UserRole
+import pytz
 
 
 @app.route("/")
@@ -22,7 +23,9 @@ def index():
 
 @app.route("/products/<product_id>")
 def product_details(product_id):
-    return render_template('details.html', product=dao.get_prod_by_id(product_id))
+    comments = dao.load_comments(product_id)
+    return render_template('details.html', product=dao.get_prod_by_id(product_id),
+                           comments=comments)
 
 
 @app.route("/register", methods=['get', 'post'])
@@ -142,6 +145,7 @@ def delete_cart(product_id):
 
 
 @app.route("/api/pay", methods=['post'])
+@login_required
 def pay():
     cart = session.get('cart')
     try:
@@ -151,6 +155,23 @@ def pay():
     else:
         del session['cart']
         return jsonify({'status': 200, 'msg': 'successful'})
+
+
+@app.route("/api/products/<product_id>/comments", methods=['post'])
+@login_required
+def add_comment(product_id):
+    c = dao.add_comment(content=request.json.get('content'), product_id=product_id)
+
+    created_date_utc = c.created_date.astimezone(pytz.utc)
+
+    return jsonify({
+        "id": c.id,
+        "content": c.content,
+        "created_date": created_date_utc,
+        "user": {
+            "avatar": c.user.avatar
+        }
+    })
 
 
 @app.route('/cart')

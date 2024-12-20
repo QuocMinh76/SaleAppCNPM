@@ -1,4 +1,4 @@
-from app.models import Category, Product, User, Receipt, ReceiptDetails
+from app.models import Category, Product, User, Receipt, ReceiptDetails, Comment
 from app import app, db
 import hashlib
 import cloudinary.uploader
@@ -100,6 +100,19 @@ def stats_products():
 
 def get_prod_by_id(id):
     return Product.query.get(id)
+
+
+def load_comments(product_id):
+    return Comment.query.filter(Comment.product_id.__eq__(product_id))
+
+
+def add_comment(content, product_id):
+    c = Comment(content=content, product_id=product_id, user=current_user)
+
+    db.session.add(c)
+    db.session.commit()
+
+    return c
 
 
 # Chạy thử in kết quả hàm thống kê

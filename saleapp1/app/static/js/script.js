@@ -62,3 +62,45 @@ function pay() {
         })
     }
 }
+
+function addComment(productId) {
+    const textarea = document.getElementById("comment")
+    const content = textarea.value.trim();
+
+    if (!content) {
+        alert("Vui lòng nhập nội dung bình luận!");
+        return;
+    }
+
+    fetch(`/api/products/${productId}/comments`, {
+        method: "post",
+        body: JSON.stringify({
+            "content": content
+        }),
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    }).then(res => res.json()).then(c => {
+        let html = `
+           <li class="list-group-item">
+              <div class="row">
+                  <div class="col-md-1">
+                      <img src="${ c.user.avatar }" class="img-fluid rounded-circle" />
+                  </div>
+                  <div class="col-md-11">
+                      <p>${ c.content }</p>
+                      <p class="date">${ moment(c.created_date).locale("vi").fromNow() }</p>
+                  </div>
+              </div>
+           </li>
+        `
+
+        let e = document.getElementById("comment_section");
+        e.innerHTML = html + e.innerHTML;
+
+        textarea.value = '';
+    }).catch(error => {
+        console.error('Error adding comment:', error);
+        alert("Đã xảy ra lỗi khi thêm bình luận. Vui lòng thử lại!");
+    });
+}

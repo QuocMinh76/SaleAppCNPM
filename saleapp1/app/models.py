@@ -5,6 +5,7 @@ import hashlib
 from enum import Enum as RoleEnum
 from flask_login import UserMixin
 from datetime import datetime
+import pytz
 
 
 class UserRole(RoleEnum):
@@ -21,6 +22,7 @@ class User(db.Model, UserMixin):
     active = Column(Boolean, default=True)
     user_role = Column(Enum(UserRole), default=UserRole.USER)
     receipts = relationship('Receipt', backref='user', lazy=True)
+    comments = relationship('Comment', backref='user', lazy=True)
 
 
 class Category(db.Model):
@@ -40,6 +42,7 @@ class Product(db.Model):
     image = Column(String(100), nullable=True)
     category_id = Column(Integer, ForeignKey(Category.id), nullable=False)
     details = relationship('ReceiptDetails', backref='product', lazy=True)
+    comments = relationship('Comment', backref='product', lazy=True)
 
     def __str__(self):
         return self.name
@@ -60,17 +63,26 @@ class ReceiptDetails(db.Model):
     unit_price = Column(Float, default=0)
 
 
+class Comment(db.Model):
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    content = Column(String(255), nullable=False)
+    created_date = Column(DateTime, default=lambda: datetime.utcnow()
+                          .replace(tzinfo=pytz.utc).astimezone(pytz.timezone('Asia/Ho_Chi_Minh')))
+    product_id = Column(Integer, ForeignKey(Product.id), nullable=False)
+    user_id = Column(Integer, ForeignKey(User.id), nullable=False)
+
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
 
         # add user
-        u = User(name="admin", username="admin",
-                 password=str(hashlib.md5("123456".strip().encode('utf-8')).hexdigest()),
-                 avatar="https://res.cloudinary.com/dxxwcby8l/image/upload/v1647056401/ipmsmnxjydrhpo21xrd8.jpg",
-                 user_role=UserRole.ADMIN)
-        db.session.add(u)
-        db.session.commit()
+        # u = User(name="admin", username="admin",
+        #          password=str(hashlib.md5("123456".strip().encode('utf-8')).hexdigest()),
+        #          avatar="https://res.cloudinary.com/dxxwcby8l/image/upload/v1647056401/ipmsmnxjydrhpo21xrd8.jpg",
+        #          user_role=UserRole.ADMIN)
+        # db.session.add(u)
+        # db.session.commit()
 
         # add categories
         # c1 = Category(name="Mobile")
@@ -184,4 +196,12 @@ if __name__ == '__main__':
         #                    image=p['image'], category_id=p['category_id'])
         #     db.session.add(prod)
         #
+        # db.session.commit()
+
+        # add comments
+        # cm1 = Comment(content='good', product_id=1, user_id=1)
+        # cm2 = Comment(content='nice', product_id=1, user_id=1)
+        # cm3 = Comment(content='great product!', product_id=1, user_id=1)
+        #
+        # db.session.add_all([cm1, cm2, cm3])
         # db.session.commit()
